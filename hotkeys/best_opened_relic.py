@@ -5,7 +5,7 @@ import mss
 import market_api as mapi
 import pandas as pd
 
-reader = easyocr.Reader(["en"])
+reader = easyocr.Reader(["en"], gpu=True)
 
 def predict_opened_relic_names():
     """Predicts the names of the opened relics. If can't detect, you suck (not really, it takes a screenshot from a 
@@ -32,7 +32,7 @@ def main(*args, **kvargs):
     df = pd.DataFrame()
     for name in relic_names:
         try:
-            df = pd.concat(df, pd.DataFrame(mapi.get_item_price(name),index=[0]))
+            df = pd.concat([df, pd.DataFrame(mapi.get_item_price(name),index=[0])])
         except Exception as e:
             print(f"couldn\'t load: {e}")
     # TODO: fix can't load error

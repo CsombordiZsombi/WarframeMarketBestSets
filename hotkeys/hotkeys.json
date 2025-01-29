@@ -4,5 +4,11 @@
         "extras":["shift","alt_l"],
         "action":"hotkeys.best_opened_relic",
         "params":null
+    },
+    {
+        "key":"P",
+        "extras":["shift","alt_l"],
+        "action":"hotkeys.parse_inventory",
+        "params":null
     }
 ]

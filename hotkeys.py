@@ -98,7 +98,3 @@ def only_list_in_dict(list,dict):
 
 if __name__ == "__main__":
     main()
-
-#Point(x=475, y=380)
-#Point(x=1438, y=458)
-#Point(x=1919, y=1079)
