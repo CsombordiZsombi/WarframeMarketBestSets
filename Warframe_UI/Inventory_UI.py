@@ -2,11 +2,19 @@ import streamlit as st
 import pandas as pd
 import json
 import requests
+from pathlib import Path
+import time
+
 
 MARKET_URL = "https://api.warframe.market/v1"
 
 def load_inventory(file_path="inventory.json"):
-    with open(file_path, "r") as file:
+    # Az aktuális fájl szülő könyvtára (eggye feljebb lépve)
+    parent_dir = Path(__file__).resolve().parent.parent
+    json_path = parent_dir / file_path
+
+    # Fájl beolvasása
+    with open(json_path, "r") as file:
         return json.load(file)
 
 def load_items(file_path="items.json"):
@@ -21,6 +29,7 @@ def map_inventory_to_urls(inventory, items):
 
 def fetch_market_orders(item_url_name):
     url = f"{MARKET_URL}/items/{item_url_name}/orders"
+    time.sleep(0.1)
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()["payload"]["orders"]
@@ -64,9 +73,8 @@ def main():
     # Gomb az adatok újratöltéséhez
     if st.button("Refresh"):
         st.session_state["refresh_count"] += 1
-
-    inventory_data = load_inventory()
     items_data = load_items()
+    inventory_data = load_inventory()
     mapped_inventory = map_inventory_to_urls(inventory_data, items_data)
     display_inventory = enrich_inventory_for_display(mapped_inventory)
 
