@@ -49,7 +49,7 @@ def get_item_price(item_url:str):
     min_sell = df[df["order_type"].str.contains("sell", case=False)]["platinum"].min()
     
     max_buy = df[df["order_type"].str.contains("buy", case=False)]["platinum"].max()
-    if max_buy is None:
+    if not max_buy:
         max_buy = 0
     return {"item_url":item_url ,"min_sell":int(min_sell),"max_buy":int(max_buy)}
 
