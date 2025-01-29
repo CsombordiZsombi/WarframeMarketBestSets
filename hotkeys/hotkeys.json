@@ -1,0 +1,8 @@
+[
+    {
+        "key":"A",
+        "extras":["shift","alt_l"],
+        "action":"hotkeys.best_opened_relic",
+        "params":null
+    }
+]

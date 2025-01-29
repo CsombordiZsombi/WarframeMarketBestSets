@@ -1,0 +1,10 @@
+{
+    "escape":{
+        "key":"esc",
+        "extras":["shift"]
+    },
+    "debug":{
+        "key":"D",
+        "extras":["shift","alt_l"]
+    }
+}
