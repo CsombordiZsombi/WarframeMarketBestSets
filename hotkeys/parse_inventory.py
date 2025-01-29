@@ -5,11 +5,16 @@ import mss
 import pandas as pd
 from pynput.mouse import Controller
 import winsound
-
-
+import json
+from rapidfuzz.distance import Levenshtein
 
 SLOT_GRID = None
 SLOT_SIZE = None
+ITEM_LIST = None
+
+BEEP = False
+
+mouse = Controller()
 
 def main(*args, **kvargs):
     start_time = time.time()
@@ -20,7 +25,13 @@ def main(*args, **kvargs):
 
     print(f"Done scanning inventory, took {round(time.time()-start_time,1)} seconds")
 def predict_inventory():
-    df = pd.DataFrame()
+    df = pd.DataFrame(columns=["item_name","quantity"])
+    
+    with open("Warframe_UI/items.json") as file:
+        global ITEM_LIST
+        item_list = json.load(file)["payload"]["items"]
+        ITEM_LIST = [item["item_name"] for item in item_list]
+
     with mss.mss() as sct:
         monitor = sct.monitors[1]  # Az első monitor adatai
         width, height = monitor["width"], monitor["height"]
@@ -39,20 +50,29 @@ def predict_inventory():
             for slot in row:
                 item = predict_item(slot, reader, sct)
                 if item["item_name"] == "":
+                    print("sor oszlop")
                     return df
+                #if df["item_name"].str.contains(item["item_name"]).any():
+                #    return df
                 df = pd.concat([df, pd.DataFrame(item)])
-        mouse = Controller()
+        
         while True:
             mouse.scroll(0, -1) #scroll down
-            time.sleep(1)
+            time.sleep(0.5)
             for slot in SLOT_GRID[-1]:
                 item = predict_item(slot, reader, sct)
                 if item["item_name"] == "":
                     return df
-                if not df.query(f"item_name == {item['item_name']} and quantity == {item['quantity']}").empty:
+                if df["item_name"].str.contains(item["item_name"]).any():
                     return df
                 df = pd.concat([df, pd.DataFrame(item)])
     return df
+def similar_item_name(word, max_distance=2):
+    global ITEM_LIST
+    for w in ITEM_LIST:
+        if Levenshtein.distance(word, w) <= max_distance:
+            return w
+    return ""
 
 def predict_item(slot, reader, sct):
     region = {
@@ -61,11 +81,20 @@ def predict_item(slot, reader, sct):
         "width":int(SLOT_SIZE[0]),
         "height":int(SLOT_SIZE[1])
         }
+    mouse.position = (int(slot[0]+SLOT_SIZE[0]/2), slot[1])
+    time.sleep(0.1)
     screenshot = sct.grab(region)
     img = np.array(screenshot)
     raw_text = reader.readtext(img, detail=0)
     item = process_raw_text(raw_text)
-    winsound.Beep(1000, 500)
+    global ITEM_LIST
+    print(ITEM_LIST)
+    print(item)
+    if not (item["item_name"] in ITEM_LIST):
+        print("")
+        item['item_name'] = similar_item_name(item['item_name'])
+    if BEEP:
+        winsound.Beep(500, 300)
     return item
                 
 def process_raw_text(raw_text):
@@ -94,5 +123,12 @@ def process_raw_text(raw_text):
     item["item_name"] = [item["item_name"].strip()]
     return item
 
-        
+def test():
+    data = {"item_name":["asd","bsd"], "quantity":[1, 1]}
+    df = pd.DataFrame(data)
+    print(df["item_name"].str.contains("aasd").any())
+
+if __name__ == "__main__":
+    test()
+
     
