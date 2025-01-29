@@ -3,6 +3,7 @@ import easyocr
 import numpy as np
 import mss
 import market_api as mapi
+import pandas as pd
 
 reader = easyocr.Reader(["en"])
 
@@ -17,7 +18,6 @@ def predict_opened_relic_names():
     with mss.mss() as sct:
         monitor = sct.monitors[1]
         width, height = monitor["width"], monitor["height"]
-        print(width, height)
         region = {"top": int(height * 0.35), 
                   "left":int(width * 0.24),
                   "width":int(width * 0.50),
@@ -27,17 +27,16 @@ def predict_opened_relic_names():
    
     return reader.readtext(img, detail=0)
 
-def main(*args, **kwargs):
+def main(*args, **kvargs):
     relic_names = predict_opened_relic_names()
-    
-    '''for name in relic_names:
+    df = pd.DataFrame()
+    for name in relic_names:
         try:
-            mapi.get_item_price(name)
+            df = pd.concat(df, pd.DataFrame(mapi.get_item_price(name),index=[0]))
         except Exception as e:
-            print("couldn\'t load")
-    print("Hello te geci")'''
+            print(f"couldn\'t load: {e}")
+    # TODO: fix can't load error
+    print(df)
 
-    print(relic_names)
-    
 if __name__ == '__main__':
     main()
