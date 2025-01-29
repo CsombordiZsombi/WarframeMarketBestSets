@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 import time
+import streamlit as st # type: ignore
 
 MARKET_URL = "https://api.warframe.market/v1"
 TIME_TO_WAIT = 0.1 # if lower, gets 429 (too many requests) http error code
@@ -77,7 +78,8 @@ def get_set_info(set_url):
         "listed_profit": set_price["min_sell"] - df["min_sell"].sum(),
     }
 
-def main():
+
+def fetch_data():
     df = pd.DataFrame(columns=[
         "set_url",
         "set_max_buy",
@@ -86,20 +88,51 @@ def main():
         "items_min_sell_sum",
         "number_of_items",
         "instant_profit",
-        "listed_profit"])
+        "listed_profit",
+    ])
     prime_sets = get_items_list()
     for item_set in prime_sets["url_name"]:
-        time.sleep(0.1)
+        time.sleep(0.1)  # API limitáció miatt
         try:
-            df = pd.concat([df,pd.DataFrame(get_set_info(item_set), index=[1])], ignore_index=True)
+            df = pd.concat([df, pd.DataFrame(get_set_info(item_set), index=[0])], ignore_index=True)
         except Exception as e:
-            print(f"Error processing item set {item_set}: {e}")
-    
-    df = df.sort_values(by='instant_profit', ascending=False)
-    print(df[:10])
-    df = df.sort_values(by='listed_profit', ascending=False)
-    print(df[:10])
+            pass
+    return df
+def main():
+    # Adatok inicializálása (ha még nincsenek betöltve)
+    if "data" not in st.session_state:
+        with st.spinner("Loading data..."):  # Spinner a betöltéshez
+            st.session_state["data"] = fetch_data()
+
+    st.title("Warframe market analyzer")
+
+    # Frissítési gomb
+    if st.button("Refresh data"):
+        st.write("Refreshing data...")
+        st.session_state["data"] = fetch_data()
+        st.success("Data refreshed successfully!")
+
+    # DataFrame megjelenítése
+    df = st.session_state["data"]
+
+    # Rendezési opciók
+    sort_column = st.selectbox(
+        "Sort columns:",
+        options=["instant_profit", "listed_profit"],
+        index=0
+    )
+    sort_order = st.radio(
+        "Sort order:",
+        options=["decreasing", "ascending"],
+        index=0
+    )
+    ascending = sort_order == "ascending"
+
+    # Adatok rendezése
+    df_sorted = df.sort_values(by=sort_column, ascending=ascending)
+    st.write("Sorted Datatable:")
+    st.dataframe(df_sorted)
 
 if __name__ == "__main__":
     main()
-    
+#streamlit run main.py
