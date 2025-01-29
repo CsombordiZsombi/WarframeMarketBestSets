@@ -8,18 +8,21 @@ import winsound
 import json
 from rapidfuzz.distance import Levenshtein
 import keyboard as kb
+import hotkeys
 
 SLOT_GRID = None
 SLOT_SIZE = None
 ITEM_LIST = None
 
+BEEP_ON_START = True
 BEEP = False
+BEEP_ON_END = True
 
 mouse = Controller()
 
 def main(*args, **kvargs):
-    #if BEEP:
-    winsound.Beep(500, 300)
+    if BEEP_ON_START:
+        winsound.Beep(500, 300)
     start_time = time.time()
     print("Scanning inventory")
 
@@ -27,10 +30,12 @@ def main(*args, **kvargs):
     df.to_json("inventory.json", orient="records", indent=4)
     wdf.to_json("wrong_reads.json", orient="records", indent=4)
 
+    if BEEP_ON_START:
+        winsound.Beep(500, 300)
     print(f"Done scanning inventory, took {round(time.time()-start_time,1)} seconds")
 def predict_inventory():
-    df = pd.DataFrame(columns=["item_name","quantity"])
-    wdf = pd.DataFrame(columns=["item_name","quantity"])
+    df = pd.DataFrame(columns=["item_name","quantity"]) # inventory data
+    wdf = pd.DataFrame(columns=["item_name","quantity"]) # wrong reads
     
     with open("Warframe_UI/items.json") as file:
         global ITEM_LIST
@@ -49,41 +54,35 @@ def predict_inventory():
            [(width*0.041, height*0.744),(width*0.147, height*0.744), (width*0.259, height*0.744), (width*0.37, height*0.744), (width*0.48, height*0.744),(width*0.59, height*0.744)],
         ]
         SLOT_SIZE = (width*0.086, height*0.153)
-        reader = easyocr.Reader(["en"], gpu=True)
+        reader = hotkeys.reader
         
         for row in SLOT_GRID: # we predict and store the first 4 rows.
             for slot in row:
                 if kb.is_pressed('q'): 
                     return df
                 item = predict_item(slot, reader, sct)
-                if not item["item_name"][0]:
-                    print("üres string init")
+                if item["item_name"][0] == [""]: #detected nothing
                     return df, wdf
                 if not item["item_name"][0] in ITEM_LIST:
-                    print(f'{item["item_name"][0]} nincs a listában init')
                     wdf = pd.concat([wdf, pd.DataFrame(item)])
                     continue
                 if df["item_name"].str.contains(item["item_name"][0]).any():
-                    print(f'{item["item_name"][0]} már felderítve init')
                     return df, wdf
                 df = pd.concat([df, pd.DataFrame(item)])
-        print("vege az init fázisnak 8==D")
-        while True:
+
+        while True: # after the first 4 rows, we scroll, then predict until detect nothing
             mouse.scroll(0, -1) #scroll down
             time.sleep(0.5)
             for slot in SLOT_GRID[-1]:
                 if kb.is_pressed('q'): 
                     return df, wdf
                 item = predict_item(slot, reader, sct)
-                if not item["item_name"][0]:
-                    print("üres string")
+                if item["item_name"][0] == [""]: #detected nothing
                     return df, wdf
                 if not item["item_name"][0] in ITEM_LIST:
-                    print(f'{item["item_name"][0]} nincs a listában')
                     wdf = pd.concat([wdf, pd.DataFrame(item)])
                     continue
                 if df["item_name"].str.contains(item["item_name"][0]).any():
-                    print(f'{item["item_name"][0]} már felderítve')
                     return df, wdf
                 df = pd.concat([df, pd.DataFrame(item)])
     return df, wdf
@@ -106,7 +105,7 @@ def predict_item(slot, reader, sct):
     img = np.array(screenshot)
     raw_text = reader.readtext(img, detail=0)
     item = process_raw_text(raw_text)
-    print(f'\t item:{item}')
+    print(f'item:{item}')
 
     if not (item["item_name"][0] in ITEM_LIST):
         item['item_name'] = [similar_item_name(item['item_name'])]
@@ -115,6 +114,8 @@ def predict_item(slot, reader, sct):
     return item
                 
 def process_raw_text(raw_text):
+
+    print(f'\nraw_text:{raw_text}')
     item = {"quantity":[1]}
     if len(raw_text) == 0:
         item["item_name"] = [""]

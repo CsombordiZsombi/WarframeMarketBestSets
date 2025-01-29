@@ -4,8 +4,9 @@ import numpy as np
 import mss
 import market_api as mapi
 import pandas as pd
+import hotkeys
 
-reader = easyocr.Reader(["en"], gpu=True)
+reader = hotkeys.reader
 
 def predict_opened_relic_names():
     """Predicts the names of the opened relics. If can't detect, you suck (not really, it takes a screenshot from a 
