@@ -61,14 +61,14 @@ def predict_inventory():
                     return df
                 item, match = predict_item(slot, reader, sct)
                 if item["item_name"][0] == [""] or item["item_name"][0] == "": #detected nothing
-                    print("Empty string")
+                    #print("Empty string")
                     return df, wdf
                 if not match:
                     wdf = pd.concat([wdf, pd.DataFrame(item)])
-                    print(f"Wrong read: {item}")
+                    #print(f"Wrong read: {item}")
                     continue
                 if df["item_name"].str.contains(item["item_name"][0]).any() or wdf["item_name"].str.contains(item["item_name"][0]).any():
-                    print(f"Duplicate item {item}")
+                    #print(f"Duplicate item {item}")
                     return df, wdf
                 df = pd.concat([df, pd.DataFrame(item)])
 
@@ -83,10 +83,10 @@ def predict_inventory():
                     return df, wdf
                 if not match:
                     wdf = pd.concat([wdf, pd.DataFrame(item)])
-                    print(f"Wrong read: {item}")
+                    #print(f"Wrong read: {item}")
                     continue
                 if df["item_name"].str.contains(item["item_name"][0]).any() or wdf["item_name"].str.contains(item["item_name"][0]).any():
-                    print(f"Duplicate item {item}")
+                    #print(f"Duplicate item {item}")
                     return df, wdf
                 df = pd.concat([df, pd.DataFrame(item)])
     return df, wdf
