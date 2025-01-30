@@ -14,11 +14,11 @@ def fetch_data():
         "instant_profit",
         "listed_profit",
     ])
-    prime_sets = mapi.get_items_list()
+    prime_sets = mapi.fetch_items_list()
     for item_set in prime_sets["url_name"]:
         time.sleep(mapi.TIME_TO_WAIT)  # API limitáció miatt
         try:
-            df = pd.concat([df, pd.DataFrame(mapi.get_set_info(item_set), index=[0])], ignore_index=True)
+            df = pd.concat([df, pd.DataFrame(mapi.fetch_set_info(item_set), index=[0])], ignore_index=True)
         except Exception as e:
             pass
     return df
