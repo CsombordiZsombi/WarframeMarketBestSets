@@ -1,12 +1,12 @@
 [
     {
-        "key":"A",
+        "key":"R",
         "extras":["shift","alt_l"],
         "action":"hotkeys.best_opened_relic",
         "params":null
     },
     {
-        "key":"P",
+        "key":"I",
         "extras":["shift","alt_l"],
         "action":"hotkeys.parse_inventory",
         "params":null
