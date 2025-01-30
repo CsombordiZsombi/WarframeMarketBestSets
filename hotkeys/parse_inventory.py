@@ -105,7 +105,6 @@ def predict_item(slot, reader, sct):
     img = np.array(screenshot)
     raw_text = reader.readtext(img, detail=0)
     item = process_raw_text(raw_text)
-    print(f'item:{item}')
 
     if not (item["item_name"][0] in ITEM_LIST):
         item['item_name'] = [similar_item_name(item['item_name'])]
@@ -115,7 +114,6 @@ def predict_item(slot, reader, sct):
                 
 def process_raw_text(raw_text):
 
-    print(f'\nraw_text:{raw_text}')
     item = {"quantity":[1]}
     if len(raw_text) == 0:
         item["item_name"] = [""]
