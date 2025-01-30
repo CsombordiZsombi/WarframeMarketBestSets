@@ -19,7 +19,7 @@ BEEP_ON_END = True
 
 mouse = Controller()
 
-with open("Warframe_UI/items.json") as file:
+with open("items.json") as file:
     item_list = json.load(file)["payload"]["items"]
     ITEM_LIST = [item["item_name"] for item in item_list]
 

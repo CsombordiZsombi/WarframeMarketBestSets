@@ -2,19 +2,15 @@ import streamlit as st
 import pandas as pd
 import json
 import requests
-from pathlib import Path
 import time
 
 
 MARKET_URL = "https://api.warframe.market/v1"
 
 def load_inventory(file_path="inventory.json"):
-    # Az aktuális fájl szülő könyvtára (eggye feljebb lépve)
-    parent_dir = Path(__file__).resolve().parent.parent
-    json_path = parent_dir / file_path
 
     # Fájl beolvasása
-    with open(json_path, "r") as file:
+    with open(file_path, "r") as file:
         return json.load(file)
 
 def load_items(file_path="items.json"):
