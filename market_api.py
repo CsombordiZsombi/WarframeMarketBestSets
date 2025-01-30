@@ -5,7 +5,7 @@ import time
 MARKET_URL = "https://api.warframe.market/v1"
 TIME_TO_WAIT = 0.1 # if lower, gets http error code 429 (too many requests)
 
-def get_items_list(filters=["prime set"]):
+def fetch_items_list(filters=["prime set"]):
     """Get all item info
 
     Args:
@@ -26,7 +26,7 @@ def get_items_list(filters=["prime set"]):
     return df[df["item_name"].str.contains('|'.join(filters), case=False)]
 
 
-def get_item_price(item_url:str):
+def fetch_item_price(item_url:str):
     """fetch the item's price from the market
 
     Args:
@@ -54,7 +54,16 @@ def get_item_price(item_url:str):
     return {"item_url":item_url ,"min_sell":int(min_sell),"max_buy":int(max_buy)}
 
 
-def get_set_info(set_url):
+def fetch_set_info(set_url):
+    """fetches the prime set's information from the warframe market
+
+    Args:
+        set_url (str): url of the prime set, accepts set's name also
+
+    Returns:
+        dict: with fields: ["set_url", "set_max_buy","set_min_sell","items_max_buy_sum",
+                            "items_min_sell_sum","number_of_items","instant_profit", "listed_profit"]
+    """
     set_url = set_url.lower()  # Convert to lowercase to match the API URL format (all lowercase)
     if " " in set_url:
         set_url = set_url.replace(" ", "_")  # Replace spaces with underscores in the URL
@@ -62,7 +71,7 @@ def get_set_info(set_url):
     if response.status_code != requests.codes.OK:
         print(f"Error getting the item set {set_url}, {response.status_code}")
         return
-    set_price = get_item_price(set_url)
+    set_price = fetch_item_price(set_url)
 
     df = pd.DataFrame(columns=["item_url", "min_sell", "max_buy"])
     jitems_in_set = response.json()["payload"]["item"]["items_in_set"]
@@ -70,7 +79,7 @@ def get_set_info(set_url):
         time.sleep(0.1)
         if item["url_name"] == set_url:
             continue
-        item_info = get_item_price(item["url_name"])
+        item_info = fetch_item_price(item["url_name"])
         for i in range(item["quantity_for_set"]):
             df = pd.concat([df, pd.DataFrame(item_info, index=[0])], ignore_index=True)
 
