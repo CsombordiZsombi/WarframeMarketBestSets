@@ -14,10 +14,14 @@ SLOT_SIZE = None
 ITEM_LIST = None
 
 BEEP_ON_START = True
-BEEP = True
+BEEP = False
 BEEP_ON_END = True
 
 mouse = Controller()
+
+with open("Warframe_UI/items.json") as file:
+    item_list = json.load(file)["payload"]["items"]
+    ITEM_LIST = [item["item_name"] for item in item_list]
 
 def main(*args, **kvargs):
     if BEEP_ON_START:
@@ -32,14 +36,10 @@ def main(*args, **kvargs):
     if BEEP_ON_START:
         winsound.Beep(500, 300)
     print(f"Done scanning inventory, took {round(time.time()-start_time,1)} seconds")
+
 def predict_inventory():
     df = pd.DataFrame(columns=["item_name","quantity"]) # inventory data
     wdf = pd.DataFrame(columns=["item_name","quantity"]) # wrong reads
-    
-    with open("Warframe_UI/items.json") as file:
-        global ITEM_LIST
-        item_list = json.load(file)["payload"]["items"]
-        ITEM_LIST = [item["item_name"] for item in item_list]
 
     with mss.mss() as sct:
         monitor = sct.monitors[1]  # Az első monitor adatai
@@ -59,7 +59,7 @@ def predict_inventory():
             for slot in row:
                 if kb.is_pressed('q'): 
                     return df
-                item, match = predict_item(slot, reader, sct)
+                item, match = predict_item(slot, SLOT_SIZE, sct)
                 if item["item_name"][0] == [""] or item["item_name"][0] == "": #detected nothing
                     #print("Empty string")
                     return df, wdf
@@ -78,7 +78,7 @@ def predict_inventory():
             for slot in SLOT_GRID[-1]:
                 if kb.is_pressed('q'): 
                     return df, wdf
-                item, match = predict_item(slot, reader, sct)
+                item, match = predict_item(slot, SLOT_SIZE, sct)
                 if item["item_name"][0] == [""] or item["item_name"][0] == "": #detected nothing
                     return df, wdf
                 if not match:
@@ -91,25 +91,26 @@ def predict_inventory():
                 df = pd.concat([df, pd.DataFrame(item)])
     return df, wdf
 
-def predict_item(slot, reader, sct):
+def predict_item(slot, slot_size, sct, move_mouse=True):
     region = {
         "left":int(slot[0]),
         "top": int(slot[1]), 
-        "width":int(SLOT_SIZE[0]),
-        "height":int(SLOT_SIZE[1])
+        "width":int(slot_size[0]),
+        "height":int(slot_size[1])
         }
-    mouse.position = (int(slot[0]+SLOT_SIZE[0]/2), slot[1]) # move the mouse
-    time.sleep(0.3)
+    if move_mouse:
+        mouse.position = (int(slot[0]+slot_size[0]/2), slot[1]) # move the mouse
+        time.sleep(0.3)
     screenshot = sct.grab(region)
     img = np.array(screenshot)
-    raw_text = reader.readtext(img, detail=0)
+    raw_text = hotkeys.reader.readtext(img, detail=0)
     item, match = process_raw_text(raw_text)
-    print(f"item:{item}, match:{match}")
+    #print(f"item:{item}, match:{match}")
     if BEEP:
         winsound.Beep(500, 300)
     return item, match
 
-def match_item_list(input_words, max_distance=1):
+def match_item_list(input_words, max_distance=2):
     input_set = set(input_words)
 
     for item in ITEM_LIST: # search for exact match
@@ -127,7 +128,7 @@ def match_item_list(input_words, max_distance=1):
 
     return input_words, False 
 def process_raw_text(raw_text):
-    print(f"raw_text: {raw_text}")
+    #print(f"raw_text: {raw_text}")
     item = {"quantity":[1]}
     if len(raw_text) == 0:
         item["item_name"] = [""]

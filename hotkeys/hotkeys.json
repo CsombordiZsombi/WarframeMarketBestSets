@@ -10,5 +10,11 @@
         "extras":["shift","alt_l"],
         "action":"hotkeys.parse_inventory",
         "params":null
+    },
+    {
+        "key":"M",
+        "extras":["shift","alt_l"],
+        "action":"hotkeys.get_mouse_position",
+        "params":null
     }
 ]
